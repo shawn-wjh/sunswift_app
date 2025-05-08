@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: M15ASushi - Invoice Creation and Validation API
   description: |
-    A comprehensive API for creating UBL 2.4-compliant invoices and validating against PEPPOL standards. 
+    A comprehensive API for creating UBL compliant invoices and validating against PEPPOL standards. 
     
     ## v1 capabilities:
     - Generate UBL 2.4-compliant invoices from JSON objects
@@ -135,7 +135,7 @@ paths:
 
   /v1/users/logout:
     post:
-      summary: User logout - IN DEVELOPMENT
+      summary: User logout
       description: |
         This endpoint logs out the user by invalidating their authentication token, effectively ending their session.
       operationId: logoutUser
@@ -163,7 +163,7 @@ paths:
 
   /v1/users:
     put:
-      summary: Update user profile - IN DEVELOPMENT
+      summary: Update user profile
       description: |
         This endpoint allows a user to update their profile information, including email, name, and password. The email must be unique, and the password must meet the specified complexity requirements.
       operationId: updateUser
@@ -231,7 +231,7 @@ paths:
                     example: Specific error message
                     
     delete:
-      summary: Remove user profile - IN DEVELOPMENT
+      summary: Remove user profile
       description: |
         This endpoint allows a user to delete their profile, removing all associated data from the system.
       operationId: removeUser
@@ -1771,3 +1771,672 @@ paths:
                   error:
                     type: string
                     example: "e.g. Invalid authentication token"
+
+  /v1/invoices/{invoiceid}/email:
+    post:
+      summary: Send invoice via email
+      description: |
+        This endpoint allows users to send an invoice via email to one or more recipients. The invoice will be attached as an XML file.
+      operationId: emailInvoice
+      tags:
+        - Sending
+      parameters:
+        - name: invoiceid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipients:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+                  description: List of recipient email addresses
+      responses:
+        "200":
+          description: Email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Email sent successfully"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "No recipients provided"
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/invoices/{invoiceid}/share:
+    put:
+      summary: Share invoice with other users
+      description: |
+        This endpoint allows users to share an invoice with other users via email. The recipients will be able to view the invoice.
+      operationId: shareInvoice
+      tags:
+        - Sending
+      parameters:
+        - name: invoiceid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipients:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+                  description: List of recipient email addresses
+      responses:
+        "200":
+          description: Invoice shared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Invoice shared successfully"
+                  sharedWith:
+                    type: array
+                    items:
+                      type: string
+                      format: email
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Invalid recipient email"
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/invoices/{invoiceid}/unshare:
+    put:
+      summary: Remove access to shared invoice
+      description: |
+        This endpoint allows users to remove access to a previously shared invoice.
+      operationId: unshareInvoice
+      tags:
+        - Sending
+      parameters:
+        - name: invoiceid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice unshared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Invoice unshared successfully"
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/invoices/{invoiceid}/export/xml:
+    get:
+      summary: Export invoice as XML
+      description: |
+        This endpoint allows users to export an invoice in XML format.
+      operationId: exportInvoiceXML
+      tags:
+        - Exporting
+      parameters:
+        - name: invoiceid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: XML export successful
+          content:
+            application/xml:
+              schema:
+                type: string
+                example: "<Invoice>...</Invoice>"
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/invoices/{invoiceid}/export/pdf:
+    get:
+      summary: Export invoice as PDF
+      description: |
+        This endpoint allows users to export an invoice in PDF format.
+      operationId: exportInvoicePDF
+      tags:
+        - Exporting
+      parameters:
+        - name: invoiceid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: PDF export successful
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/invoices/{invoiceid}/export/csv:
+    get:
+      summary: Export invoice as CSV
+      description: |
+        This endpoint allows users to export an invoice in CSV format.
+      operationId: exportInvoiceCSV
+      tags:
+        - Exporting
+      parameters:
+        - name: invoiceid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: CSV export successful
+          content:
+            text/csv:
+              schema:
+                type: string
+                example: "InvoiceID,IssueDate,Total...\nINV-001,2024-01-01,100.00..."
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/xml-dataset/upload:
+    post:
+      summary: Upload XML dataset
+      description: |
+        This endpoint allows users to upload a dataset of XML invoices. The XML will be validated against the required schema before processing.
+      operationId: uploadXMLDataset
+      tags:
+        - Invoice v1
+      parameters:
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                xmlDataset:
+                  type: string
+                  description: XML dataset string containing one or more invoices
+                  example: "<Invoices><Invoice>...</Invoice><Invoice>...</Invoice></Invoices>"
+      responses:
+        "200":
+          description: XML dataset uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "XML dataset uploaded successfully"
+                  recordsUploaded:
+                    type: integer
+                    example: 2
+        "400":
+          description: Invalid XML dataset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Invalid XML format"
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/orders/{orderId}:
+    get:
+      summary: Get order details by ID
+      description: |
+        This endpoint retrieves the details of a specific order by its ID.
+      operationId: getOrderDetails
+      tags:
+        - External APIs (used by frontend)
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: string
+                  details:
+                    type: object
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/orders/{orderId}/invoice-template:
+    get:
+      summary: Get invoice template from order
+      description: |
+        This endpoint generates an invoice template populated with data from a specific order.
+      operationId: getInvoiceTemplateFromOrder
+      tags:
+        - External APIs
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice template generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  template:
+                    type: object
+                    description: Invoice template populated with order data
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/currency/rates:
+    get:
+      summary: Get all available exchange rates
+      description: |
+        This endpoint retrieves the current exchange rates for all supported currencies.
+      operationId: getExchangeRates
+      tags:
+        - External APIs
+      parameters:
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Exchange rates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rates:
+                    type: object
+                    additionalProperties:
+                      type: number
+                      description: Exchange rate against base currency
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/currency/convert:
+    post:
+      summary: Convert invoice amounts to a different currency
+      description: |
+        This endpoint converts all monetary amounts in an invoice to a specified target currency.
+      operationId: convertInvoiceCurrency
+      tags:
+        - External APIs
+      parameters:
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                invoice:
+                  type: object
+                  description: Invoice to convert
+                targetCurrency:
+                  type: string
+                  description: Target currency code (ISO 4217)
+                  example: "USD"
+      responses:
+        "200":
+          description: Invoice converted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  convertedInvoice:
+                    type: object
+                    description: Invoice with amounts converted to target currency
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/ai/text-to-invoice:
+    post:
+      summary: Create invoice from text prompt
+      description: |
+        This endpoint uses AI to generate an invoice from a text description.
+      operationId: createInvoiceFromText
+      tags:
+        - External APIs
+      parameters:
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                  description: Text description of the invoice to generate
+      responses:
+        "200":
+          description: Invoice generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice:
+                    type: object
+                    description: Generated invoice
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/ai/image-to-invoice:
+    post:
+      summary: Create invoice from image
+      description: |
+        This endpoint uses AI to generate an invoice from an image of an invoice or receipt.
+      operationId: createInvoiceFromImage
+      tags:
+        - External APIs
+      parameters:
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Image file (max 10MB)
+      responses:
+        "200":
+          description: Invoice generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice:
+                    type: object
+                    description: Generated invoice
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
+
+  /v1/ai/assistant:
+    post:
+      summary: Create AI assistant
+      description: |
+        This endpoint creates an AI assistant for invoice-related tasks.
+      operationId: createAssistant
+      tags:
+        - External APIs
+      parameters:
+        - name: token
+          in: cookie
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Assistant created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assistantId:
+                    type: string
+                    description: ID of the created assistant
+        "401":
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid authentication token"
